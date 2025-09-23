@@ -1,11 +1,14 @@
 package com.cathay.cdc.thumbnail.poc.service;
 
+import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.storage.*;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.UUID;
 
@@ -13,10 +16,28 @@ import java.util.UUID;
 @Service
 public class GcpStorageService {
 
-    private final Storage storage ;
-    public GcpStorageService() {
-        // Automatically uses GOOGLE_APPLICATION_CREDENTIALS
-        this.storage = StorageOptions.getDefaultInstance().getService();
+    @Value("${gcp.project-id}")
+    private String projectId;
+
+    @Value("${gcp.bucket-name}")
+    private String bucketName;
+
+    @Value("${gcp.credentials.path}")
+    private Resource credentialsResource;
+
+    private Storage storage;
+
+    @PostConstruct
+    private void init() throws IOException {
+        // Load credentials from configurable path
+        this.storage = StorageOptions.newBuilder()
+                .setProjectId(projectId)
+                .setCredentials(ServiceAccountCredentials.fromStream(credentialsResource.getInputStream()))
+                .build()
+                .getService();
+
+        // Verify credentials
+        System.out.println("Loaded GCP credentials for: " + storage.getOptions().getCredentials());
     }
 
     public String uploadFile(String bucketName, MultipartFile file) throws IOException {
