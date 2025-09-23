@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -33,15 +35,15 @@ public class AuthController {
         log.info("Login attempt for user: {}", username);
         try {
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            username,
-                            request.get("password")
-                    )
+                    new UsernamePasswordAuthenticationToken(username, request.get("password"))
             );
             String role = authentication.getAuthorities().iterator().next().getAuthority();
-            String token = jwtUtil.generateToken(username, role);
-            log.info("Login successful for user: {}, role: {}", username, role);
-            return ResponseEntity.ok(Map.of("token", token, "role", role));
+            List<String> roles = authentication.getAuthorities().stream()
+                    .map(a -> a.getAuthority())
+                    .collect(Collectors.toList());
+            String token = jwtUtil.generateToken(username, roles);
+            log.info("Login successful for user: {}, roles={}", username, roles);
+            return ResponseEntity.ok(Map.of("token", token, "roles", roles));
         } catch (AuthenticationException e) {
             log.warn("Login failed for user: {}", username, e);
             return ResponseEntity.status(401).body(Map.of("error", "Invalid credentials"));

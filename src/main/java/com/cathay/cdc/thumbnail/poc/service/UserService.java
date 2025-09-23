@@ -2,18 +2,21 @@ package com.cathay.cdc.thumbnail.poc.service;
 
 import com.cathay.cdc.thumbnail.poc.entity.User;
 import com.cathay.cdc.thumbnail.poc.repository.UserRepository;
-import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
 import java.util.List;
 
-@Service
 @Slf4j
+@Service
+@RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
 
-    public UserService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+//    public UserService(UserRepository userRepository) {
+//        this.userRepository = userRepository;
+//    }
 
     public List<User> findAll() {
         log.info("Fetching all users from database...");
