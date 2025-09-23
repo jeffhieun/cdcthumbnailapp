@@ -3,7 +3,7 @@
         xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
-            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+                            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
 
     <!-- =============================== -->
     <!-- USERS TABLE                     -->
@@ -23,6 +23,7 @@
                 <constraints nullable="false"/>
             </column>
             <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
         </createTable>
     </changeSet>
 
@@ -56,12 +57,19 @@
         <addForeignKeyConstraint
                 baseTableName="user_roles" baseColumnNames="user_id"
                 referencedTableName="users" referencedColumnNames="id"
+                onDelete="CASCADE"
                 constraintName="fk_user_roles_users"/>
 
         <addForeignKeyConstraint
                 baseTableName="user_roles" baseColumnNames="role_id"
                 referencedTableName="roles" referencedColumnNames="id"
+                onDelete="CASCADE"
                 constraintName="fk_user_roles_roles"/>
+
+        <addUniqueConstraint
+                tableName="user_roles"
+                columnNames="user_id, role_id"
+                constraintName="uk_user_roles_unique"/>
     </changeSet>
 
     <!-- =============================== -->
@@ -76,11 +84,14 @@
         </insert>
     </changeSet>
 
+    <!-- =============================== -->
+    <!-- ADMIN USER (password: admin123) -->
+    <!-- =============================== -->
     <changeSet id="5-insert-admin-user" author="thumbnail-poc">
         <insert tableName="users">
             <column name="username" value="admin"/>
-            <!-- store BCrypt hash instead of plain password -->
-            <column name="password" value="$2a$10$7sN0nQjPEfPvWcHQ4A.x7eOD0X5bbCQ2cI0B0QnVRhn8WlRr3V3iq"/>
+            <!-- BCrypt hash of "admin123" -->
+            <column name="password" value="$2a$10$M8RC8oxIMW1QHDwB65Z//.milB3fK41NVt9hfXVHEFCrF/Q8CCQ3i"/>
             <column name="enabled" value="true"/>
         </insert>
     </changeSet>
@@ -92,5 +103,23 @@
         </insert>
     </changeSet>
 
+    <!-- =============================== -->
+    <!-- USER ACCOUNT (password: user123)-->
+    <!-- =============================== -->
+    <changeSet id="7-insert-normal-user" author="thumbnail-poc">
+        <insert tableName="users">
+            <column name="username" value="user"/>
+            <!-- BCrypt hash of "user123" -->
+            <column name="password" value="$2a$10$M8RC8oxIMW1QHDwB65Z//.milB3fK41NVt9hfXVHEFCrF/Q8CCQ3i"/>
+            <column name="enabled" value="true"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="8-assign-user-role" author="thumbnail-poc">
+        <insert tableName="user_roles">
+            <column name="user_id" value="2"/>
+            <column name="role_id" value="2"/> <!-- ROLE_USER -->
+        </insert>
+    </changeSet>
 
 </databaseChangeLog>
