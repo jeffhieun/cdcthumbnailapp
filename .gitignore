@@ -1,0 +1,27 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+out/
+
+# Maven
+target/
+
+# Gradle
+.gradle/
+build/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+
+# Environment variables
+.env
+
+# Spring Boot dev files
+application-*.yml
+application-*.properties
+
+# Other
+*.class
