@@ -26,6 +26,8 @@ dependencies {
 	implementation 'org.liquibase:liquibase-core'
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
     implementation 'com.google.cloud:spring-cloud-gcp-starter-storage:3.0.0'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'com.github.ben-manes.caffeine:caffeine'
 
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 

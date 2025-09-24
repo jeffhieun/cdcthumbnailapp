@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -43,6 +45,7 @@ public class GcpStorageService {
         log.debug("Loaded GCP credentials: {}", storage.getOptions().getCredentials().toString());
     }
 
+    @Cacheable(value = "listFilesCache", key = "#bucketName")
     public List<FileMetadata> listFiles(String bucketName) {
         log.info("Listing files in bucket: {}", bucketName);
         Bucket bucket = storage.get(bucketName);
@@ -80,6 +83,7 @@ public class GcpStorageService {
         return gsUrl;
     }
 
+    @CacheEvict(value = "listFilesCache", allEntries = true)
     public String uploadMultipartFile(String bucketName, MultipartFile file) {
         String extension = getFileExtension(file.getOriginalFilename());
         String objectName = UUID.randomUUID() + extension;
