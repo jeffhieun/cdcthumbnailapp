@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -69,44 +70,74 @@ public class GcpStorageService {
         return fileMetadataList;
     }
 
-    public String uploadFile(String bucketName, MultipartFile file) throws IOException {
-        String objectName = file.getOriginalFilename();
-        log.info("Uploading file: {} to bucket: {}", objectName, bucketName);
+//    public String uploadFile(String bucketName, MultipartFile file) throws IOException {
+//        String objectName = file.getOriginalFilename();
+//        log.info("Uploading file: {} to bucket: {}", objectName, bucketName);
+//
+//        BlobId blobId = BlobId.of(bucketName, objectName);
+//        BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
+//
+//        storage.create(blobInfo, file.getBytes());
+//
+//        String gsUrl = String.format("gs://%s/%s", bucketName, objectName);
+//        log.info("File uploaded successfully: {}", gsUrl);
+//        return gsUrl;
+//    }
 
-        BlobId blobId = BlobId.of(bucketName, objectName);
-        BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
+//    @CacheEvict(value = "listFilesCache", allEntries = true)
+//    public String uploadMultipartFileX(String bucketName, MultipartFile file) {
+//        String extension = getFileExtension(file.getOriginalFilename());
+//        String objectName = UUID.randomUUID() + extension;
+//        log.info("Uploading multipart file: {} as {}", file.getOriginalFilename(), objectName);
+//        try {
+//            BlobId blobId = BlobId.of(bucketName, objectName);
+//            BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
+//                    .setContentType(file.getContentType())
+//                    .build();
+//            storage.create(blobInfo, file.getBytes());
+//
+//            String publicUrl = String.format("https://storage.googleapis.com/%s/%s", bucketName, objectName);
+//            log.info("File uploaded successfully: {} -> {}", file.getOriginalFilename(), publicUrl);
+//            return publicUrl;
+//        } catch (IOException e) {
+//            log.error("Failed to upload file: {}", file.getOriginalFilename(), e);
+//            throw new RuntimeException("Failed to upload file: " + e.getMessage(), e);
+//        }
+//    }
 
-        storage.create(blobInfo, file.getBytes());
+    @CacheEvict(value = "listFilesCache", key = "#bucketName") // clear cache for this bucket
+    public List<FileMetadata> uploadMultipartFiles(String bucketName, List<MultipartFile> files) {
+        List<FileMetadata> metadataList = new ArrayList<>();
+        for (MultipartFile file : files) {
+            String extension = getFileExtension(file.getOriginalFilename());
+            String objectName = UUID.randomUUID() + extension;
 
-        String gsUrl = String.format("gs://%s/%s", bucketName, objectName);
-        log.info("File uploaded successfully: {}", gsUrl);
-        return gsUrl;
-    }
+            try {
+                BlobId blobId = BlobId.of(bucketName, objectName);
+                BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
+                        .setContentType(file.getContentType())
+                        .build();
+                storage.create(blobInfo, file.getBytes());
 
-    @CacheEvict(value = "listFilesCache", allEntries = true)
-    public String uploadMultipartFile(String bucketName, MultipartFile file) {
-        String extension = getFileExtension(file.getOriginalFilename());
-        String objectName = UUID.randomUUID() + extension;
-        log.info("Uploading multipart file: {} as {}", file.getOriginalFilename(), objectName);
-        try {
-            BlobId blobId = BlobId.of(bucketName, objectName);
-            BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
-                    .setContentType(file.getContentType())
-                    .build();
-            storage.create(blobInfo, file.getBytes());
+                String publicUrl = String.format("https://storage.googleapis.com/%s/%s", bucketName, objectName);
 
-            String publicUrl = String.format("https://storage.googleapis.com/%s/%s", bucketName, objectName);
-            log.info("File uploaded successfully: {} -> {}", file.getOriginalFilename(), publicUrl);
-            return publicUrl;
-        } catch (IOException e) {
-            log.error("Failed to upload file: {}", file.getOriginalFilename(), e);
-            throw new RuntimeException("Failed to upload file: " + e.getMessage(), e);
+                FileMetadata fileMetadata = FileMetadata.builder()
+                        .name(file.getName())
+                        .url(publicUrl)
+                        .createdAt(LocalDateTime.now())
+                        .build();
+                metadataList.add(fileMetadata);
+                log.info("File uploaded: {} -> {}", file.getOriginalFilename(), publicUrl);
+            } catch (IOException e) {
+                log.error("Failed to upload file: {}", file.getOriginalFilename(), e);
+                throw new RuntimeException("Failed to upload file: " + e.getMessage(), e);
+            }
         }
+        return metadataList;
     }
 
     public byte[] downloadFile(String bucketName, String objectName) {
         log.info("Downloading file: {} from bucket: {}", objectName, bucketName);
-
         Blob blob = storage.get(bucketName, objectName);
         if (blob == null) {
             log.error("File not found in bucket {}: {}", bucketName, objectName);

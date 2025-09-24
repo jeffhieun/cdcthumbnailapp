@@ -31,10 +31,10 @@ public class FileController {
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<ApiResponse<String>> upload(@RequestParam("file") MultipartFile file) {
-        String publicUrl = gcpStorageService.uploadMultipartFile(bucketName, file);
-        log.info("File uploaded: {}", file.getOriginalFilename());
-        return ResponseEntity.ok(ApiResponse.success(publicUrl, "File uploaded successfully"));
+    public ResponseEntity<ApiResponse<List<FileMetadata>>> upload(@RequestParam("files") List<MultipartFile> files) {
+        List<FileMetadata>  publicUrl = gcpStorageService.uploadMultipartFiles(bucketName, files);
+        log.info("File uploaded: {}", publicUrl.size());
+        return ResponseEntity.ok(ApiResponse.success(publicUrl, "Files uploaded successfully"));
     }
 
     @GetMapping("/download/{fileName}")

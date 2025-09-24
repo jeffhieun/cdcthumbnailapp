@@ -14,7 +14,6 @@ import java.time.LocalDateTime;
 public class FileMetadata {
     private String name;
     private String url;
-    private String contentType;
     private long size;          // in bytes
     private LocalDateTime createdAt;
 }
