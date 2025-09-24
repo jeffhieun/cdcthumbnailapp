@@ -19,6 +19,7 @@ repositories {
 	mavenCentral()
 }
 
+
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -28,6 +29,7 @@ dependencies {
     implementation 'com.google.cloud:spring-cloud-gcp-starter-storage:3.0.0'
     implementation 'org.springframework.boot:spring-boot-starter-cache'
     implementation 'com.github.ben-manes.caffeine:caffeine'
+    implementation 'org.imgscalr:imgscalr-lib:4.2'
 
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 

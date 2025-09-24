@@ -13,6 +13,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor // Needed by @Builder (to call all-args constructor)
 public class FileMetadata {
     private String name;
+    private String bucket;
+    private String contentType;
     private String url;
     private long size;          // in bytes
     private LocalDateTime createdAt;
