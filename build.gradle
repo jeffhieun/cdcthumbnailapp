@@ -26,9 +26,6 @@ dependencies {
 	implementation 'org.liquibase:liquibase-core'
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
     implementation 'com.google.cloud:spring-cloud-gcp-starter-storage:3.0.0'
-    // Google Cloud Storage
-//    implementation 'com.google.cloud:google-cloud-storage:2.28.1'
-
 
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 

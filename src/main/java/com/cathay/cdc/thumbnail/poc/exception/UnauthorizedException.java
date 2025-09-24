@@ -1,0 +1,7 @@
+package com.cathay.cdc.thumbnail.poc.exception;
+
+public class UnauthorizedException extends RuntimeException {
+    public UnauthorizedException(String message) {
+        super(message);
+    }
+}
