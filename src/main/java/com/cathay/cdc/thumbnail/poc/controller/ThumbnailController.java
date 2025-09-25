@@ -18,7 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ThumbnailController {
 
-    private ThumbnailService thumbnailService;
+    private final ThumbnailService thumbnailService;
 
     @GetMapping("/thumbnails/last")
     public ResponseEntity<ApiResponse<List<FileMetadata>>> getLastCreatedThumbnails() {
