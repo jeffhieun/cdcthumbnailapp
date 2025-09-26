@@ -17,7 +17,10 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @Service
@@ -38,6 +41,7 @@ public class ThumbnailService {
 
     @Value("${thumbnail.folder:thumbnails}")
     private String thumbnailFolder;
+
     @Value("${gcp.credentials.path}")
     private Resource credentialsResource;
 
@@ -52,8 +56,7 @@ public class ThumbnailService {
                 .setCredentials(ServiceAccountCredentials.fromStream(credentialsResource.getInputStream()))
                 .build()
                 .getService();
-        log.info("GCP Storage initialized successfully with bucket: {}", bucketName);
-        log.debug("Loaded GCP credentials: {}", storage.getOptions().getCredentials().toString());
+        log.info("✅ GCP Storage initialized with bucket: {}", bucketName);
     }
 
     @Scheduled(fixedDelay = 60000) // every 1 min, waits for previous run
@@ -95,6 +98,11 @@ public class ThumbnailService {
     }
 
     private boolean needsThumbnail(Blob blob) {
+        // Skip if already inside thumbnails folder
+        if (blob.getName().startsWith(thumbnailFolder + "/")) {
+            return false;
+        }
+        // Skip if metadata flag is set
         return !"true".equals(Optional.ofNullable(blob.getMetadata())
                 .map(meta -> meta.get("thumbnailGenerated"))
                 .orElse(null));
@@ -109,6 +117,7 @@ public class ThumbnailService {
                 return null;
             }
 
+            // Resize
             BufferedImage thumbnail = Scalr.resize(originalImage, Scalr.Method.QUALITY, thumbnailWidth);
 
             // Determine format
@@ -117,10 +126,13 @@ public class ThumbnailService {
                     .filter(f -> ImageIO.getImageWritersByFormatName(f).hasNext())
                     .orElse("jpg");
 
-            String thumbName = String.format("%s/%s", thumbnailFolder, blob.getName());
+            // ✅ Ensure only one "thumbnails/" prefix
+            String originalName = blob.getName().replaceFirst("^" + thumbnailFolder + "/+", "");
+            String thumbName = thumbnailFolder + "/" + originalName;
 
             try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
                 ImageIO.write(thumbnail, format, os);
+
                 Blob created = storage.create(
                         BlobInfo.newBuilder(bucket.getName(), thumbName)
                                 .setContentType("image/" + format)
@@ -128,15 +140,16 @@ public class ThumbnailService {
                         os.toByteArray()
                 );
 
-                // Merge metadata to mark as processed
+                // Mark original blob as processed
                 Map<String, String> metadata = new HashMap<>(Optional.ofNullable(blob.getMetadata()).orElse(Map.of()));
                 metadata.put("thumbnailGenerated", "true");
                 blob.toBuilder().setMetadata(metadata).build().update();
 
                 // Construct public URL
-                String url = String.format("https://storage.googleapis.com/%s/%s", created.getBucket(), created.getName());
+                String url = String.format("https://storage.googleapis.com/%s/%s",
+                        created.getBucket(), created.getName());
 
-                log.info("✅ Thumbnail created for {}", blob.getName());
+                log.info("✅ Thumbnail created: {}", created.getName());
 
                 return FileMetadata.builder()
                         .name(created.getName())

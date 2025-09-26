@@ -21,7 +21,7 @@ build/
 
 # Spring Boot dev files
 application-*.yml
-application-*.properties
+#application-*.properties
 
 # Other
 *.class

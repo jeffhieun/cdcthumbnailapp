@@ -18,7 +18,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -78,9 +77,7 @@ public class GcpStorageService {
     public List<FileMetadata> uploadMultipartFiles(String bucketName, List<MultipartFile> files) {
         List<FileMetadata> metadataList = new ArrayList<>();
         for (MultipartFile file : files) {
-            String extension = getFileExtension(file.getOriginalFilename());
-            String objectName = UUID.randomUUID() + extension;
-
+            String objectName = file.getOriginalFilename();
             try {
                 BlobId blobId = BlobId.of(bucketName, objectName);
                 BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
@@ -114,12 +111,5 @@ public class GcpStorageService {
         }
         log.info("File downloaded successfully: {}", objectName);
         return blob.getContent();
-    }
-
-    private String getFileExtension(String filename) {
-        if (filename == null || !filename.contains(".")) {
-            return "";
-        }
-        return filename.substring(filename.lastIndexOf("."));
     }
 }
