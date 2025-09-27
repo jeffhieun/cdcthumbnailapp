@@ -17,11 +17,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -45,9 +41,6 @@ public class ThumbnailService {
     @Value("${gcp.credentials.path}")
     private Resource credentialsResource;
 
-    // ✅ Store last created thumbnails as FileMetadata
-    private final List<FileMetadata> lastCreatedThumbnails = new CopyOnWriteArrayList<>();
-
     @PostConstruct
     private void init() throws IOException {
         log.info("Initializing GCP Storage client for project: {}", projectId);
@@ -62,8 +55,6 @@ public class ThumbnailService {
     @Scheduled(fixedDelay = 60000) // every 1 min, waits for previous run
     public void generateThumbnailsJob() {
         log.info("🚀 Starting thumbnail generation job...");
-        lastCreatedThumbnails.clear();
-
         Bucket bucket = storage.get(bucketName);
         if (bucket == null) {
             log.error("❌ Bucket not found: {}", bucketName);
@@ -73,22 +64,41 @@ public class ThumbnailService {
         for (Blob blob : bucket.list(Storage.BlobListOption.pageSize(100)).iterateAll()) {
             if (isImage(blob) && needsThumbnail(blob)) {
                 try {
-                    FileMetadata created = createThumbnail(bucket, blob);
-                    if (created != null) {
-                        lastCreatedThumbnails.add(created);
-                    }
+                    createThumbnail(bucket, blob);
                 } catch (Exception e) {
                     log.error("❌ Failed processing {}: {}", blob.getName(), e.getMessage(), e);
                 }
             }
         }
-
-        log.info("🏁 Thumbnail job finished. Created {} thumbnails.", lastCreatedThumbnails.size());
     }
 
-    // ✅ Return immutable list of last created thumbnails
     public List<FileMetadata> getLastCreatedThumbnails() {
-        return List.copyOf(lastCreatedThumbnails);
+        Bucket bucket = storage.get(bucketName);
+        if (bucket == null) {
+            log.error("❌ Bucket not found: {}", bucketName);
+            return List.of();
+        }
+
+        List<FileMetadata> thumbnails = new ArrayList<>();
+
+        for (Blob blob : bucket.list(Storage.BlobListOption.prefix(thumbnailFolder + "/")).iterateAll()) {
+            // skip folder placeholders
+            if (blob.isDirectory()) continue;
+
+            String url = String.format("https://storage.googleapis.com/%s/%s",
+                    blob.getBucket(), blob.getName());
+
+            thumbnails.add(FileMetadata.builder()
+                    .bucket(blob.getBucket())
+                    .name(blob.getName())
+                    .contentType(blob.getContentType())
+                    .size(blob.getSize())
+                    .url(url)
+                    .build()
+            );
+        }
+        log.info("📂 Found {} thumbnails in bucket {}/{}", thumbnails.size(), bucketName, thumbnailFolder);
+        return thumbnails;
     }
 
     private boolean isImage(Blob blob) {
@@ -102,10 +112,23 @@ public class ThumbnailService {
         if (blob.getName().startsWith(thumbnailFolder + "/")) {
             return false;
         }
-        // Skip if metadata flag is set
-        return !"true".equals(Optional.ofNullable(blob.getMetadata())
-                .map(meta -> meta.get("thumbnailGenerated"))
-                .orElse(null));
+
+        Map<String, String> metadata = Optional.ofNullable(blob.getMetadata()).orElse(Map.of());
+        boolean markedAsGenerated = "true".equals(metadata.get("thumbnailGenerated"));
+
+        if (markedAsGenerated) {
+            // ✅ Check if thumbnail actually exists in the bucket
+            String originalName = blob.getName().replaceFirst("^" + thumbnailFolder + "/+", "");
+            String thumbName = thumbnailFolder + "/" + originalName;
+            Blob thumbBlob = storage.get(bucketName, thumbName);
+
+            if (thumbBlob == null || !thumbBlob.exists()) {
+                log.warn("⚠️ Thumbnail missing for {}, will regenerate.", blob.getName());
+                return true; // regenerate
+            }
+            return false; // thumbnail exists, skip
+        }
+        return true; // not marked yet → needs generation
     }
 
     private FileMetadata createThumbnail(Bucket bucket, Blob blob) throws IOException {
@@ -116,10 +139,8 @@ public class ThumbnailService {
                 log.warn("⚠️ Skipping {} - not a valid image", blob.getName());
                 return null;
             }
-
             // Resize
             BufferedImage thumbnail = Scalr.resize(originalImage, Scalr.Method.QUALITY, thumbnailWidth);
-
             // Determine format
             String format = Optional.ofNullable(blob.getContentType())
                     .map(type -> type.substring(type.lastIndexOf('/') + 1))
@@ -128,13 +149,13 @@ public class ThumbnailService {
 
             // ✅ Ensure only one "thumbnails/" prefix
             String originalName = blob.getName().replaceFirst("^" + thumbnailFolder + "/+", "");
-            String thumbName = thumbnailFolder + "/" + originalName;
+            String thumbNail = thumbnailFolder + "/" + originalName;
 
             try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
                 ImageIO.write(thumbnail, format, os);
 
                 Blob created = storage.create(
-                        BlobInfo.newBuilder(bucket.getName(), thumbName)
+                        BlobInfo.newBuilder(bucket.getName(), thumbNail)
                                 .setContentType("image/" + format)
                                 .build(),
                         os.toByteArray()
