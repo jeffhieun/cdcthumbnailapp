@@ -14,10 +14,6 @@ import java.util.List;
 public class UserService {
     private final UserRepository userRepository;
 
-//    public UserService(UserRepository userRepository) {
-//        this.userRepository = userRepository;
-//    }
-
     public List<User> findAll() {
         log.info("Fetching all users from database...");
         List<User> users = userRepository.findAll();
