@@ -29,7 +29,7 @@ jib {
     }
     container {
         mainClass = 'com.cathay.cdc.thumbnail.poc.ThumbnailPocApplication'
-        ports = ['8080']   // ✅ dynamic Cloud Run port
+        ports = ['8099']   // ✅ dynamic Cloud Run port
         jvmFlags = ['-Xms512m', '-Xmx1024m']
     }
 }

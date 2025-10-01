@@ -15,11 +15,5 @@ import java.util.Collections;
 public class ThumbnailPocApplication {
 	public static void main(String[] args) {
         SpringApplication app = new SpringApplication(ThumbnailPocApplication.class);
-        // Override server.port from environment variable if present
-        String port = System.getenv("PORT");
-        if (port != null) {
-            app.setDefaultProperties(Collections.singletonMap("server.port", port));
-        }
-        app.run(args);
 	}
 }
