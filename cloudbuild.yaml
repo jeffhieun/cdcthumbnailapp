@@ -6,10 +6,10 @@ steps:
       - clean
       - jib
       - --no-daemon
-      - -Djib.to.image=asia-southeast1-docker.pkg.dev/plasma-galaxy-472907-c7/jeff-repo/cdc-thumbnail-app
+      - -Djib.to.image=asia-southeast1-docker.pkg.dev/plasma-galaxy-472907-c7/jeff-repo/cdc-thumbnail-app:latest
       - -Djib.to.credHelper=gcloud
 
-  # Deploy the image to Cloud Run (automated deployment step)
+  # Deploy the image to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'gcloud'
     args:
@@ -23,8 +23,7 @@ steps:
       - '--platform'
       - 'managed'
       - '--allow-unauthenticated'
-      - '--port'
-      - '8099'
+      # You can remove --port if using ${PORT:8099} in Spring Boot
 
 images:
   - "asia-southeast1-docker.pkg.dev/plasma-galaxy-472907-c7/jeff-repo/cdc-thumbnail-app:latest"
