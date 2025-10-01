@@ -14,6 +14,6 @@ import java.util.Collections;
 @EnableScheduling
 public class ThumbnailPocApplication {
 	public static void main(String[] args) {
-        SpringApplication app = new SpringApplication(ThumbnailPocApplication.class);
+        SpringApplication.run(ThumbnailPocApplication.class, args);
 	}
 }
