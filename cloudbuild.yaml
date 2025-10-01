@@ -1,0 +1,12 @@
+steps:
+  - name: gradle:8.10.2-jdk21
+    entrypoint: gradle
+    args:
+      - clean
+      - jib
+      - --no-daemon
+      - -Djib.to.image=asia-southeast1-docker.pkg.dev/plasma-galaxy-472907-c7/jeff-repo/cdc-thumbnail-app
+      - -Djib.to.credHelper=gcloud
+
+images:
+  - "asia-southeast1-docker.pkg.dev/plasma-galaxy-472907-c7/jeff-repo/cdc-thumbnail-app:latest"

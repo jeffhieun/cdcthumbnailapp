@@ -1,30 +1,44 @@
 plugins {
-	id 'java'
-	id 'war'
-	id 'org.springframework.boot' version '3.5.6'
-	id 'io.spring.dependency-management' version '1.1.7'
+    id 'java'
+    id 'org.springframework.boot' version '3.5.6'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'com.google.cloud.tools.jib' version '3.4.4'
 }
 
 group = 'com.cathay.cdc'
 version = '0.0.1-SNAPSHOT'
-description = 'This is a cloud-based image thumbnail system. Users can log in to the system and upload images. The system will generate thumbnails, and users can view a list of uploaded images. The list includes file name, file size, upload date, thumbnail status, and a download link for the thumbnail.'
+description = 'Cloud-based image thumbnail system'
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
+jib {
+    from {
+        image = 'eclipse-temurin:21-jre'
+    }
+    to {
+        image = 'asia-southeast1-docker.pkg.dev/plasma-galaxy-472907-c7/jeff-repo/cdc-thumbnail-app'
+        // ✅ Remove credHelper for Cloud Build, ADC works automatically
+    }
+    container {
+        mainClass = 'com.cathay.cdc.thumbnail.ThumbnailApplication'
+        ports = ["\${PORT}"]   // ✅ dynamic Cloud Run port
+        jvmFlags = ['-Xms512m', '-Xmx1024m']
+    }
+}
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.liquibase:liquibase-core'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.liquibase:liquibase-core'
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
     implementation 'com.google.cloud:spring-cloud-gcp-starter-storage:3.0.0'
     implementation 'org.springframework.boot:spring-boot-starter-cache'
@@ -37,15 +51,14 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
-    // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
-	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'org.springframework.security:spring-security-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+    useJUnitPlatform()
 }
