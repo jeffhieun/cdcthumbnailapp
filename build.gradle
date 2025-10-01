@@ -28,8 +28,8 @@ jib {
         // ✅ Remove credHelper for Cloud Build, ADC works automatically
     }
     container {
-        mainClass = 'com.cathay.cdc.thumbnail.ThumbnailApplication'
-        ports = ["\${PORT}"]   // ✅ dynamic Cloud Run port
+        mainClass = 'com.cathay.cdc.thumbnail.poc.ThumbnailPocApplication'
+        ports = ['8080']   // ✅ dynamic Cloud Run port
         jvmFlags = ['-Xms512m', '-Xmx1024m']
     }
 }
