@@ -1,4 +1,5 @@
 steps:
+  # Build and push the container image using Jib and Gradle
   - name: gradle:8.10.2-jdk21
     entrypoint: gradle
     args:
@@ -7,6 +8,21 @@ steps:
       - --no-daemon
       - -Djib.to.image=asia-southeast1-docker.pkg.dev/plasma-galaxy-472907-c7/jeff-repo/cdc-thumbnail-app
       - -Djib.to.credHelper=gcloud
+
+  # Deploy the image to Cloud Run (automated deployment step)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'cdc-thumbnail-app'
+      - '--image'
+      - 'asia-southeast1-docker.pkg.dev/plasma-galaxy-472907-c7/jeff-repo/cdc-thumbnail-app:latest'
+      - '--region'
+      - 'asia-southeast1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
 
 images:
   - "asia-southeast1-docker.pkg.dev/plasma-galaxy-472907-c7/jeff-repo/cdc-thumbnail-app:latest"
