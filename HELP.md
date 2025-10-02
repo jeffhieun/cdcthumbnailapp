@@ -1,51 +1,33 @@
-Got it 👍 Since your **Cloud Run service is already built and running**, we can simplify the README by skipping **Step 1 (Build & Push Docker Image)** and starting directly from authentication + deploy/test steps.
-
-Here’s the updated **clean README** 👇
+Got it 👍 Here’s a **shorter, clean README** that’s easy to follow:
 
 ---
 
-# 📦 CDC Thumbnail App Deployment Guide
+# 🚀 CDC Thumbnail App — Quick Deploy Guide
 
-This guide covers how to manage and deploy the **CDC Thumbnail App** to **Google Cloud Run** using **Artifact Registry** and **Cloud SQL Proxy**.
-
----
-
-## 1. Authenticate gcloud
+## 1. Authenticate
 
 ```bash
 gcloud auth login
 gcloud config set project plasma-galaxy-472907-c7
-gcloud auth list
 ```
 
 ---
 
-## 2. Manage Artifact Registry
+## 2. Artifact Registry
 
-### 🔍 Check existing repositories
+Check or create repo:
 
 ```bash
 gcloud artifacts repositories list --location=asia-southeast1
-```
-
-### ➕ Create a repository (if not exists)
-
-```bash
 gcloud artifacts repositories create jeff-repo \
-    --repository-format=docker \
-    --location=asia-southeast1 \
-    --description="Repository for CDC Thumbnail App"
-```
-
-### 📖 Describe repository
-
-```bash
-gcloud artifacts repositories describe jeff-repo --location=asia-southeast1
+  --repository-format=docker \
+  --location=asia-southeast1 \
+  --description="CDC Thumbnail App Repo"
 ```
 
 ---
 
-## 3. Build & Push with Gradle Jib (when updating image)
+## 3. Build & Push (Gradle Jib)
 
 ```bash
 ./gradlew clean jib --no-daemon \
@@ -71,43 +53,41 @@ gcloud run deploy cdc-thumbnail-app \
 
 ---
 
-## 5. Optional: Clean Up Artifact Registry
+## 5. Local Test
 
-```bash
-# Delete repository
-gcloud artifacts repositories delete jeff-repo \
-    --location=asia-southeast1 \
-    --quiet
-
-# List repositories
-gcloud artifacts repositories list --location=asia-southeast1
-```
-
----
-
-## 6. Local Testing
-
-### 🏃 Run app locally
 ```bash
 ./gradlew clean build
-```
-
-```bash
 PORT=8099 java -jar build/libs/thumbnail-poc-0.0.1-SNAPSHOT.jar
 ```
 
-### 🔑 Start Cloud SQL Proxy
+Run Cloud SQL Proxy:
 
 ```bash
-hieunguyen@Hieus-MacBook-Pro ~ % ./cloud-sql-proxy plasma-galaxy-472907-c7:asia-southeast1:cdc-thumbnail --port 5432
-
-2025/10/01 16:37:34 Authorizing with Application Default Credentials
-2025/10/01 16:37:34 [plasma-galaxy-472907-c7:asia-southeast1:cdc-thumbnail] Listening on 127.0.0.1:5432
-2025/10/01 16:37:34 The proxy has started successfully and is ready for new connections!
+./cloud-sql-proxy plasma-galaxy-472907-c7:asia-southeast1:cdc-thumbnail --port 5432
 ```
 
 ---
 
-✅ This version assumes the **Cloud Run service already exists**, and you’ll only need to rebuild/redeploy when updating your code.
+## 6. Workflow Test Inputs
 
-Do you want me to also add a **short "Update flow" section** (like: *Edit code → Run Jib → Deploy → Test*) so your team knows the minimal steps for future updates?
+**JSON 1**
+
+```json
+{
+  "event": { "data": { "bucket": "thumbnail-workflow-bucket-demo12345", "name": "katinat1.jpg" }},
+  "cloud_run_service_url": "https://clrun-thumbnail-processor-693024508611.asia-southeast1.run.app"
+}
+```
+
+**JSON 2**
+
+```json
+{
+  "event": { "data": { "bucket": "thumbnail-workflow-bucket-demo12345", "name": "System_Design_Note.html" }},
+  "cloud_run_service_url": "https://clrun-thumbnail-processor-693024508611.asia-southeast1.run.app"
+}
+```
+
+---
+
+👉 Do you also want me to include the **ready-to-run `gcloud workflows executions run` commands** with these JSONs, so you don’t need to copy/paste them manually?

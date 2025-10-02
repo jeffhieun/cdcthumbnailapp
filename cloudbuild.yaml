@@ -1,29 +1,35 @@
-steps:
-  # Build and push the container image using Jib and Gradle
-  - name: gradle:8.10.2-jdk21
-    entrypoint: gradle
-    args:
-      - clean
-      - jib
-      - --no-daemon
-      - -Djib.to.image=asia-southeast1-docker.pkg.dev/plasma-galaxy-472907-c7/jeff-repo/cdc-thumbnail-app:latest
-      - -Djib.to.credHelper=gcloud
-
-  # Deploy the image to Cloud Run
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: 'gcloud'
-    args:
-      - 'run'
-      - 'deploy'
-      - 'cdc-thumbnail-app'
-      - '--image'
-      - 'asia-southeast1-docker.pkg.dev/plasma-galaxy-472907-c7/jeff-repo/cdc-thumbnail-app:latest'
-      - '--region'
-      - 'asia-southeast1'
-      - '--platform'
-      - 'managed'
-      - '--allow-unauthenticated'
-      # You can remove --port if using ${PORT:8099} in Spring Boot
-
-images:
-  - "asia-southeast1-docker.pkg.dev/plasma-galaxy-472907-c7/jeff-repo/cdc-thumbnail-app:latest"
+#steps:
+#  # Step 1: Build the Docker image
+#  - name: 'gcr.io/cloud-builders/docker'
+#    args:
+#      - 'build'
+#      - '-t'
+#      - '${_IMAGE}'
+#      - '-f'
+#      - 'docker/Dockerfile'
+#      - '.'
+#
+#  # Step 2: Push the image to Artifact Registry / GCR
+#  - name: 'gcr.io/cloud-builders/docker'
+#    args:
+#      - 'push'
+#      - '${_IMAGE}'
+#
+#  # Step 3: Deploy to Cloud Run
+#  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+#    entrypoint: gcloud
+#    args:
+#      - 'run'
+#      - 'deploy'
+#      - 'clrun-thumbnail-processor'
+#      - '--image=${_IMAGE}'
+#      - '--region=asia-southeast1'
+#      - '--platform=managed'
+#      - '--allow-unauthenticated'
+#      - '--project=plasma-galaxy-472907-c7'
+#
+#substitutions:
+#  _IMAGE: 'asia-southeast1-docker.pkg.dev/plasma-galaxy-472907-c7/cloud-run-source-deploy/clrun-thumbnail-processor:latest'
+#
+#images:
+#  - '${_IMAGE}'
