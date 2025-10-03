@@ -89,5 +89,3 @@ Run Cloud SQL Proxy:
 ```
 
 ---
-
-👉 Do you also want me to include the **ready-to-run `gcloud workflows executions run` commands** with these JSONs, so you don’t need to copy/paste them manually?
