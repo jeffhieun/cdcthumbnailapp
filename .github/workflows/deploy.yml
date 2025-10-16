@@ -1,0 +1,34 @@
+name: Deploy to Cloud Run
+on:
+  push:
+    branches: [ "main" ]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker asia-southeast1-docker.pkg.dev --quiet
+
+      - name: Build & Push Image with Jib
+        run: ./gradlew jib
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy cdc-thumbnail-app \
+            --image=asia-southeast1-docker.pkg.dev/plasma-galaxy-472907-c7/jeff-repo/cdc-thumbnail-app:latest \
+            --region=asia-southeast1 \
+            --platform=managed \
+            --allow-unauthenticated \
+            --port=8099
